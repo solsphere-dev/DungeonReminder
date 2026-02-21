@@ -9,12 +9,6 @@ _G.DungeonReminder = DR
 -- Core state
 DR.expectedName = nil
 
--- Patch: activity name -> actual instance name exceptions
-DR.INSTANCE_NAME_ALIASES = {
-    ["Tazavesh: Streets of Wonder"] = "Tazavesh, the Veiled Market",
-    ["Tazavesh: So'leah's Gambit"]  = "Tazavesh, the Veiled Market",
-}
-
 function DR:ApplyDefaults()
     DungeonReminderDB.profile = DungeonReminderDB.profile or {}
     local p = DungeonReminderDB.profile

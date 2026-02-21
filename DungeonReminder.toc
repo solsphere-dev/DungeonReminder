@@ -2,12 +2,13 @@
 ## Title: Dungeon Reminder
 ## Notes: New Dungeon Who Dis?
 ## Author: SolSphere
-## Version: 12.1.0
+## Version: 12.2.0
 ## SavedVariables: DungeonReminderDB
 
 ## Category: Utility
 
 DungeonReminder.lua
+data\aliases.lua
 ui/flash.lua
 ui/options.lua
 slash.lua
