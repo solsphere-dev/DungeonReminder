@@ -8,3 +8,6 @@
 ## Category: Utility
 
 DungeonReminder.lua
+ui/flash.lua
+ui/options.lua
+slash.lua
