@@ -2,7 +2,8 @@
 ## Title: Dungeon Reminder
 ## Notes: New Dungeon Who Dis?
 ## Author: SolSphere
-## Version: 0.0.2
+## Version: 12.1.0
+## SavedVariables: DungeonReminderDB
 
 ## Category: Utility
 

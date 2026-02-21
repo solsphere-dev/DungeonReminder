@@ -2,12 +2,66 @@ local expectedName = nil
 local flashFrame = nil
 local optionsFrame = nil
 
+-- SavedVariables
+DungeonReminderDB = DungeonReminderDB or {}
+
+local function ApplyDefaults()
+    DungeonReminderDB.profile = DungeonReminderDB.profile or {}
+    local p = DungeonReminderDB.profile
+
+    -- Store the actual font path (simplest)
+    if not p.flashFontPath then
+        p.flashFontPath = "Fonts\\FRIZQT__.TTF" -- default WoW UI font
+    end
+end
+
+-- Simple built-in font choices (no libs)
+local FONT_CHOICES = {
+    { label = "Friz Quadrata (Default)", path = "Fonts\\FRIZQT__.TTF" },
+    { label = "Arial Narrow",            path = "Fonts\\ARIALN.TTF" },
+    { label = "Morpheus",                path = "Fonts\\MORPHEUS.TTF" },
+    { label = "Skurri",                  path = "Fonts\\SKURRI.TTF" },
+}
+
+local function GetFontLabelByPath(path)
+    for _, f in ipairs(FONT_CHOICES) do
+        if f.path == path then return f.label end
+    end
+    return "Custom"
+end
+
+local function ApplyFlashFont()
+    if not (flashFrame and flashFrame.text) then return end
+    ApplyDefaults()
+
+    local p = DungeonReminderDB.profile
+    local fontPath = p.flashFontPath or "Fonts\\FRIZQT__.TTF"
+
+    -- Keep your existing template’s size by reading current font size
+    local _, size, flags = flashFrame.text:GetFont()
+    size = size or 16
+
+    flashFrame.text:SetFont(fontPath, size, flags)
+end
+
+-- Patch: activity name -> actual instance name exceptions
+local INSTANCE_NAME_ALIASES = {
+    ["Tazavesh Streets"] = "Tazavesh, the Veiled Market",
+    ["Tazavesh Gambit"]  = "Tazavesh, the Veiled Market",
+}
+
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("LFG_LIST_APPLICATION_STATUS_UPDATED")
 eventFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 eventFrame:SetScript("OnEvent", function(self, event, ...)
+    if event == "PLAYER_ENTERING_WORLD" then
+        ApplyDefaults()
+        ApplyFlashFont()
+        return
+    end
+
     if event == "LFG_LIST_APPLICATION_STATUS_UPDATED" then
         local searchResultID, newStatus = ...
         if newStatus == "inviteaccepted" then
@@ -17,7 +71,10 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                 if act then
                     local name = act.fullName:gsub("%s%([^)]*%)", "")
                     print("|cffffd700Joined: |r" .. name)
-                    expectedName = name
+
+                    -- Patch: store the instance-match name when needed (Tazavesh wings)
+                    expectedName = INSTANCE_NAME_ALIASES[name] or name
+
                     ShowFlashText(name)
                 end
             end
@@ -53,6 +110,8 @@ function ShowFlashText(msg)
         txt:SetTextColor(1, .93, 0)
         flashFrame.text = txt  -- Store for reuse
 
+        ApplyFlashFont()
+
         local closeBtn = CreateFrame("Button", nil, flashFrame, "UIPanelCloseButton")
         closeBtn:SetPoint("TOPRIGHT", -5, -5)
         closeBtn:SetScript("OnClick", function()
@@ -62,6 +121,7 @@ function ShowFlashText(msg)
     end
 
     flashFrame.text:SetText(msg)
+    ApplyFlashFont()
     flashFrame:Show()
 end
 
@@ -95,7 +155,37 @@ local function DrCmd(input)
 
             local desc = optionsFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
             desc:SetPoint("TOP", title, "BOTTOM", 0, -10)
-            desc:SetText("Options panel - coming soon!")
+            desc:SetText("Configure how the reminder looks.")
+            
+            -- Font dropdown
+            local fontLabel = optionsFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+            fontLabel:SetPoint("TOPLEFT", desc, "BOTTOMLEFT", -50, -18)
+            fontLabel:SetText("Reminder Font:")
+
+            local dropdown = CreateFrame("Frame", "DrFontDropdown", optionsFrame, "UIDropDownMenuTemplate")
+            dropdown:SetPoint("TOPLEFT", fontLabel, "BOTTOMLEFT", -16, -6)
+
+            local function SetFont(path)
+                ApplyDefaults()
+                DungeonReminderDB.profile.flashFontPath = path
+                ApplyFlashFont()
+                UIDropDownMenu_SetText(dropdown, GetFontLabelByPath(path))
+            end
+
+            UIDropDownMenu_SetWidth(dropdown, 240)
+            UIDropDownMenu_Initialize(dropdown, function(self, level)
+                local info = UIDropDownMenu_CreateInfo()
+                for _, f in ipairs(FONT_CHOICES) do
+                    info.text = f.label
+                    info.func = function() SetFont(f.path) end
+                    info.checked = (DungeonReminderDB.profile and DungeonReminderDB.profile.flashFontPath == f.path)
+                    UIDropDownMenu_AddButton(info, level)
+                end
+            end)
+
+            -- Set initial dropdown text
+            ApplyDefaults()
+            UIDropDownMenu_SetText(dropdown, GetFontLabelByPath(DungeonReminderDB.profile.flashFontPath))
 
             local closeBtn = CreateFrame("Button", nil, optionsFrame, "UIPanelCloseButton")
             closeBtn:SetPoint("TOPRIGHT", -5, -5)
@@ -117,7 +207,10 @@ local function DrCmd(input)
         end
         -- Assume name is valid if not ID
         print("|cffffd700Joined: |r" .. name)
-        expectedName = name
+
+        -- Patch: mirror the same alias behavior for /dr test
+        expectedName = INSTANCE_NAME_ALIASES[name] or name
+
         ShowFlashText(name)
     else
         print("|cffffd700Dungeon Reminder: |r /dr [options] |r- Open options |r| /dr test <dungeonId or name> |r- Test reminder")
