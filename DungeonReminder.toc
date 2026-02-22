@@ -7,8 +7,12 @@
 
 ## Category: Utility
 
+libs\LibStub\LibStub.lua
+libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
+
 DungeonReminder.lua
 data\aliases.lua
-ui/flash.lua
-ui/options.lua
+ui\flash.lua
+ui\options.lua
 slash.lua

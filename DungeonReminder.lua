@@ -13,6 +13,15 @@ function DR:ApplyDefaults()
     DungeonReminderDB.profile = DungeonReminderDB.profile or {}
     local p = DungeonReminderDB.profile
 
+    -- migration: if reminderFontPath is missing, set it to default
+    if p.flashFontPath and not p.reminderFontPath then
+        p.reminderFontPath = p.flashFontPath
+        p.flashFontPath = nil
+    end
+
+    if p.showAllFonts == nil then p.showAllFonts = false end
+    if not p.fontPage then p.fontPage = 1 end
+
     if not p.reminderFontPath then
         p.reminderFontPath = "Fonts\\FRIZQT__.TTF"
     end

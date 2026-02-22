@@ -2,6 +2,7 @@
 -- Purpose: reminder popup UI (flash frame)
 
 local DR = _G.DungeonReminder
+DR.LSM = LibStub and LibStub("LibSharedMedia-3.0", true) or nil
 
 -- Built-in font choices (no libs)
 DR.FONT_CHOICES = {
@@ -19,16 +20,23 @@ function DR:GetFontLabelByPath(path)
 end
 
 function DR:ApplyFlashFont()
-    if not (self.flashFrame and self.flashFrame.text) then return end
-    self:ApplyDefaults()
+  if not (self.flashFrame and self.flashFrame.text) then return end
+  self:ApplyDefaults()
 
-    local p = DungeonReminderDB.profile
-    local fontPath = p.reminderFontPath or "Fonts\\FRIZQT__.TTF"
+  local p = DungeonReminderDB.profile
 
-    local _, size, flags = self.flashFrame.text:GetFont()
-    size = size or 16
+  local fontPath
+  if self.LSM and p.reminderFontName then
+    fontPath = self.LSM:Fetch("font", p.reminderFontName, true)
+  end
 
-    self.flashFrame.text:SetFont(fontPath, size, flags)
+  -- fallback if LSM not present or fetch failed
+  if not fontPath then
+    fontPath = p.reminderFontPath or "Fonts\\FRIZQT__.TTF"
+  end
+
+  local _, size, flags = self.flashFrame.text:GetFont()
+  self.flashFrame.text:SetFont(fontPath, size or 16, flags)
 end
 
 function DR:ShowFlashText(msg)
